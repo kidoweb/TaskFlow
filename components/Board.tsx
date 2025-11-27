@@ -88,6 +88,10 @@ export const BoardView: React.FC<BoardProps> = ({ userId }) => {
   const [boardDescription, setBoardDescription] = useState('');
   const [selectedColor, setSelectedColor] = useState('#3b82f6');
   const [removingMember, setRemovingMember] = useState<string | null>(null);
+  
+  // Флаг для игнорирования обновлений из Firebase во время локального обновления
+  const isLocalUpdateRef = useRef(false);
+  const lastLocalUpdateRef = useRef<string>('');
 
   useEffect(() => {
     if (!boardId) return;
@@ -99,6 +103,14 @@ export const BoardView: React.FC<BoardProps> = ({ userId }) => {
         if (!data.data) {
            data.data = { columns: {}, cards: {}, columnOrder: [] };
         }
+        
+        // Игнорируем обновления из Firebase, если мы сами обновляем данные
+        // Сравниваем хеш данных, чтобы убедиться, что это не наше собственное обновление
+        const dataHash = JSON.stringify(data.data);
+        if (isLocalUpdateRef.current && dataHash === lastLocalUpdateRef.current) {
+          return;
+        }
+        
         setBoard({ ...data, id: docSnap.id });
         setPermissionError(false);
         
@@ -296,14 +308,27 @@ export const BoardView: React.FC<BoardProps> = ({ userId }) => {
     }
 
     // Optimistic update
+    const dataHash = JSON.stringify(newBoardData);
+    lastLocalUpdateRef.current = dataHash;
+    isLocalUpdateRef.current = true;
     setBoard(prev => prev ? { ...prev, data: newBoardData } : null);
 
     // Persist to Firebase
     updateDoc(doc(db, 'boards', board.id), {
       data: newBoardData
+    }).then(() => {
+      // Разрешаем обновления из Firebase после успешного сохранения
+      // Используем небольшую задержку, чтобы дать Firebase время синхронизироваться
+      setTimeout(() => {
+        isLocalUpdateRef.current = false;
+        lastLocalUpdateRef.current = '';
+      }, 500);
     }).catch((error: any) => {
       console.error("Failed to update board:", error);
       if (error.code === 'permission-denied') setPermissionError(true);
+      // Разрешаем обновления из Firebase даже при ошибке
+      isLocalUpdateRef.current = false;
+      lastLocalUpdateRef.current = '';
     });
 
     // Создаем запись активности для перемещения карточки
