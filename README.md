@@ -34,7 +34,12 @@
 2. Настройте Firebase:
    - Создайте проект в Firebase Console
    - Скопируйте конфигурацию в `firebase.ts`
-   - Настройте Firestore Security Rules
+   - Настройте Firestore Security Rules в Firebase Console
+   - **ВАЖНО:** Создайте необходимые индексы в Firestore:
+     - Перейдите в Firebase Console → Firestore → Indexes
+     - Или используйте Firebase CLI: `firebase deploy --only firestore:indexes`
+     - Или создайте индексы вручную по ссылкам из ошибок в консоли браузера
+     - Файл `firestore.indexes.json` содержит конфигурацию всех необходимых индексов
 
 3. Запустите приложение:
    ```bash

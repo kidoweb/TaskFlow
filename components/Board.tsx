@@ -216,19 +216,32 @@ export const BoardView: React.FC<BoardProps> = ({ userId }) => {
       const user = auth.currentUser;
       const userName = getUserDisplayName(userId);
       
-      await addDoc(collection(db, 'activities'), {
+      // Создаем объект активности, исключая undefined значения
+      const activityData: any = {
         boardId: board.id,
-        cardId,
         type,
         userId,
         userEmail: user?.email || null,
         userName,
         description,
-        oldValue,
-        newValue,
-        metadata,
         createdAt: Date.now()
-      });
+      };
+
+      // Добавляем поля только если они определены
+      if (cardId !== undefined) {
+        activityData.cardId = cardId;
+      }
+      if (oldValue !== undefined) {
+        activityData.oldValue = oldValue;
+      }
+      if (newValue !== undefined) {
+        activityData.newValue = newValue;
+      }
+      if (metadata !== undefined) {
+        activityData.metadata = metadata;
+      }
+      
+      await addDoc(collection(db, 'activities'), activityData);
     } catch (error) {
       console.error('Error creating activity:', error);
     }

@@ -14,7 +14,14 @@
 
 3. **Настройте Firebase:**
    - Убедитесь, что в `firebase.ts` указаны правильные credentials
-   - Настройте Firestore Security Rules для публичного доступа (если нужно)
+   - Настройте Firestore Security Rules в Firebase Console
+   - **ВАЖНО:** Создайте необходимые индексы в Firestore:
+     - Перейдите в Firebase Console → Firestore → Indexes
+     - Или используйте файл `firestore.indexes.json` для автоматического создания:
+       ```bash
+       firebase deploy --only firestore:indexes
+       ```
+     - Или создайте индексы вручную по ссылкам из ошибок в консоли браузера
 
 4. **Запустите деплой:**
    - Просто запушьте изменения в ветку `main`:
