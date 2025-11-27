@@ -89,9 +89,8 @@ export const BoardView: React.FC<BoardProps> = ({ userId }) => {
   const [selectedColor, setSelectedColor] = useState('#3b82f6');
   const [removingMember, setRemovingMember] = useState<string | null>(null);
   
-  // Флаг для игнорирования обновлений из Firebase во время локального обновления
-  const isLocalUpdateRef = useRef(false);
-  const lastLocalUpdateRef = useRef<string>('');
+  // Отслеживание времени последнего локального обновления
+  const lastLocalUpdateTimeRef = useRef<number>(0);
 
   useEffect(() => {
     if (!boardId) return;
@@ -104,10 +103,9 @@ export const BoardView: React.FC<BoardProps> = ({ userId }) => {
            data.data = { columns: {}, cards: {}, columnOrder: [] };
         }
         
-        // Игнорируем обновления из Firebase, если мы сами обновляем данные
-        // Сравниваем хеш данных, чтобы убедиться, что это не наше собственное обновление
-        const dataHash = JSON.stringify(data.data);
-        if (isLocalUpdateRef.current && dataHash === lastLocalUpdateRef.current) {
+        // Игнорируем обновления в течение 1 секунды после локального обновления
+        const timeSinceLastUpdate = Date.now() - lastLocalUpdateTimeRef.current;
+        if (timeSinceLastUpdate < 1000) {
           return;
         }
         
@@ -289,13 +287,15 @@ export const BoardView: React.FC<BoardProps> = ({ userId }) => {
       startCol = newBoardData.columns[source.droppableId];
       finishCol = newBoardData.columns[destination.droppableId];
 
-      if (startCol === finishCol) {
+      // Проверяем, перемещается ли карточка внутри одной колонки
+      if (source.droppableId === destination.droppableId) {
         const newCardIds = Array.from(startCol.cardIds);
         newCardIds.splice(source.index, 1);
         newCardIds.splice(destination.index, 0, draggableId);
         
         newBoardData.columns[startCol.id].cardIds = newCardIds;
       } else {
+        // Перемещение между разными колонками
         const startCardIds = Array.from(startCol.cardIds);
         startCardIds.splice(source.index, 1);
         
@@ -308,31 +308,22 @@ export const BoardView: React.FC<BoardProps> = ({ userId }) => {
     }
 
     // Optimistic update
-    const dataHash = JSON.stringify(newBoardData);
-    lastLocalUpdateRef.current = dataHash;
-    isLocalUpdateRef.current = true;
+    // Сохраняем время последнего локального обновления
+    lastLocalUpdateTimeRef.current = Date.now();
     setBoard(prev => prev ? { ...prev, data: newBoardData } : null);
 
     // Persist to Firebase
     updateDoc(doc(db, 'boards', board.id), {
       data: newBoardData
-    }).then(() => {
-      // Разрешаем обновления из Firebase после успешного сохранения
-      // Используем небольшую задержку, чтобы дать Firebase время синхронизироваться
-      setTimeout(() => {
-        isLocalUpdateRef.current = false;
-        lastLocalUpdateRef.current = '';
-      }, 500);
     }).catch((error: any) => {
       console.error("Failed to update board:", error);
       if (error.code === 'permission-denied') setPermissionError(true);
-      // Разрешаем обновления из Firebase даже при ошибке
-      isLocalUpdateRef.current = false;
-      lastLocalUpdateRef.current = '';
+      // При ошибке сбрасываем блокировку
+      lastLocalUpdateTimeRef.current = 0;
     });
 
-    // Создаем запись активности для перемещения карточки
-    if (type === 'card' && startCol && finishCol && startCol !== finishCol) {
+    // Создаем запись активности для перемещения карточки между колонками
+    if (type === 'card' && startCol && finishCol && source.droppableId !== destination.droppableId) {
       const card = board.data.cards[draggableId];
       if (card) {
         createActivity(
