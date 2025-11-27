@@ -1,3 +1,18 @@
+export interface NotificationSettings {
+  enabled: boolean;
+  soundEnabled: boolean;
+  soundVolume: number;
+  emailNotifications: boolean;
+  types: {
+    assignment: boolean;
+    comment: boolean;
+    deadline: boolean;
+    mention: boolean;
+    card_update: boolean;
+    board_update: boolean;
+  };
+}
+
 export interface UserProfile {
   uid: string;
   email: string | null;
@@ -10,6 +25,8 @@ export interface UserProfile {
   telegram?: string;
   discord?: string;
   updatedAt?: number;
+  // Настройки уведомлений
+  notificationSettings?: NotificationSettings;
 }
 
 export interface Comment {

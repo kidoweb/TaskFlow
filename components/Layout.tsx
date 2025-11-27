@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
-import { LogOut, Layout as LayoutIcon, User, Sun, Moon } from 'lucide-react';
+import { LogOut, Layout as LayoutIcon, User, Sun, Moon, HelpCircle, Settings } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from './ThemeProvider';
 import { Notifications } from './Notifications';
+import { HelpModal } from './HelpModal';
+import { NotificationSettingsModal } from './NotificationSettings';
+import { Tooltip } from './Tooltip';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,6 +18,8 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children, userEmail, userId }) => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const [showHelp, setShowHelp] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -35,13 +40,35 @@ export const Layout: React.FC<LayoutProps> = ({ children, userEmail, userId }) =
           <div className="flex items-center space-x-3">
             <Notifications userId={userId} />
             
-            <button
-              onClick={toggleTheme}
-              className="p-2.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95"
-              title={theme === 'light' ? 'Включить темную тему' : 'Включить светлую тему'}
-            >
-              {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-            </button>
+            <Tooltip content="Настройки уведомлений" position="bottom">
+              <button
+                onClick={() => setShowNotificationSettings(true)}
+                className="p-2.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95"
+                type="button"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            </Tooltip>
+            
+            <Tooltip content="Справка" position="bottom">
+              <button
+                onClick={() => setShowHelp(true)}
+                className="p-2.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95"
+                type="button"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </button>
+            </Tooltip>
+            
+            <Tooltip content={theme === 'light' ? 'Включить темную тему' : 'Включить светлую тему'} position="bottom">
+              <button
+                onClick={toggleTheme}
+                className="p-2.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95"
+                type="button"
+              >
+                {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+              </button>
+            </Tooltip>
 
             <Link
               to="/profile"
@@ -65,6 +92,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, userEmail, userId }) =
       <main className="flex-1 w-full h-full">
         {children}
       </main>
+      
+      <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      <NotificationSettingsModal
+        isOpen={showNotificationSettings}
+        onClose={() => setShowNotificationSettings(false)}
+        userId={userId}
+      />
     </div>
   );
 };

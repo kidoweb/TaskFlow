@@ -62,6 +62,7 @@ export const BoardView: React.FC<BoardProps> = ({ userId }) => {
   const [permissionError, setPermissionError] = useState(false);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [editingCard, setEditingCard] = useState<any>(null);
+  const [showActivityHistory, setShowActivityHistory] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [userProfiles, setUserProfiles] = useState<{ [key: string]: UserProfile }>({});
 
@@ -2679,15 +2680,20 @@ service cloud.firestore {
                 </div>
               </div>
 
-              {/* Activity Feed */}
+              {/* Activity History Button */}
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <HistoryIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-100">История активности</h3>
-                </div>
-                <div className="max-h-64 overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-                  <ActivityFeed boardId={board.id} cardId={editingCard.id} userId={userId} />
-                </div>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowActivityHistory(true);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md font-medium"
+                  type="button"
+                >
+                  <HistoryIcon className="w-5 h-5" />
+                  <span>История активности</span>
+                </button>
               </div>
             </div>
 
@@ -2731,6 +2737,49 @@ service cloud.firestore {
                   Сохранить изменения
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activity History Modal */}
+      {showActivityHistory && editingCard && board && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowActivityHistory(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-h-[90vh] flex flex-col animate-scale-in">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                  <HistoryIcon className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    История активности
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {editingCard.content}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowActivityHistory(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                type="button"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+              <ActivityFeed boardId={board.id} cardId={editingCard.id} userId={userId} />
             </div>
           </div>
         </div>

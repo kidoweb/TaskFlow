@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, where, onSnapshot, updateDoc, doc, orderBy, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Notification, NotificationType } from '../types';
@@ -6,6 +6,7 @@ import { Bell, X, CheckCircle2, MessageSquare, User, Clock, AlertCircle, FileTex
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { soundManager } from '../utils/soundNotifications';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -21,6 +22,7 @@ export const Notifications: React.FC<NotificationsProps> = ({ userId }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
+  const previousUnreadCountRef = useRef(0);
 
   useEffect(() => {
     const q = query(
@@ -36,8 +38,16 @@ export const Notifications: React.FC<NotificationsProps> = ({ userId }) => {
         ...doc.data()
       })) as Notification[];
       
+      const newUnreadCount = notifs.filter(n => !n.read).length;
+      
+      // Воспроизводим звук при появлении нового уведомления
+      if (newUnreadCount > previousUnreadCountRef.current && previousUnreadCountRef.current > 0) {
+        soundManager.play('notification');
+      }
+      
       setNotifications(notifs);
-      setUnreadCount(notifs.filter(n => !n.read).length);
+      setUnreadCount(newUnreadCount);
+      previousUnreadCountRef.current = newUnreadCount;
       setLoading(false);
     }, (error) => {
       console.error('Error loading notifications:', error);

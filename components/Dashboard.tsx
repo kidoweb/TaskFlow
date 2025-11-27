@@ -14,6 +14,7 @@ import { db } from '../firebase';
 import { Board } from '../types';
 import { Link } from 'react-router-dom';
 import { Plus, Users, ArrowRight, Loader2, Search, AlertTriangle } from 'lucide-react';
+import { OnboardingTour, TourStep } from './OnboardingTour';
 
 interface DashboardProps {
   userId: string;
@@ -133,6 +134,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
     }
   };
 
+  const onboardingSteps: TourStep[] = [
+    {
+      id: 'welcome',
+      target: 'center',
+      title: 'Добро пожаловать в TaskFlow!',
+      content: 'TaskFlow - это современное приложение для управления задачами с использованием Kanban-досок. Давайте начнем знакомство!',
+      position: 'center'
+    },
+    {
+      id: 'create-board',
+      target: '[data-tour="create-board"]',
+      title: 'Создание доски',
+      content: 'Нажмите здесь, чтобы создать новую доску. Доска - это пространство для организации ваших задач и проектов.',
+      position: 'right'
+    },
+    {
+      id: 'join-board',
+      target: '[data-tour="join-board"]',
+      title: 'Присоединение к доске',
+      content: 'Используйте код приглашения, чтобы присоединиться к существующей доске. Код можно получить у владельца доски.',
+      position: 'right'
+    },
+    {
+      id: 'boards-list',
+      target: '[data-tour="boards-list"]',
+      title: 'Ваши доски',
+      content: 'Здесь отображаются все доски, к которым у вас есть доступ. Кликните на доску, чтобы открыть её.',
+      position: 'bottom'
+    }
+  ];
+
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-64px)] items-center justify-center">
@@ -143,6 +175,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <OnboardingTour steps={onboardingSteps} storageKey={`taskflow-onboarding-${userId}`} />
       {permissionError && (
         <div className="mb-8 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-l-4 border-red-500 dark:border-red-400 p-6 rounded-xl shadow-lg animate-fade-in">
           <div className="flex items-start">
@@ -183,7 +216,7 @@ service cloud.firestore {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Main Content - Board List */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6" data-tour="boards-list">
             {boards.map((board, index) => (
               <Link 
                 key={board.id} 
@@ -244,7 +277,7 @@ service cloud.firestore {
         {/* Sidebar - Actions */}
         <div className="space-y-6">
           {/* Create Board Widget */}
-          <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg backdrop-blur-sm" data-tour="create-board">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Plus className="w-5 h-5 text-white" />
@@ -278,7 +311,7 @@ service cloud.firestore {
           </div>
 
           {/* Join Board Widget */}
-          <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg backdrop-blur-sm" data-tour="join-board">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Search className="w-5 h-5 text-white" />

@@ -36,6 +36,7 @@ export const AuthContainer: React.FC = () => {
       let msg = "Произошла ошибка. Попробуйте снова.";
       if (err.code === 'auth/wrong-password') msg = "Неверный пароль.";
       if (err.code === 'auth/user-not-found') msg = "Пользователь не найден.";
+      if (err.code === 'auth/invalid-credential') msg = "Неверный email или пароль.";
       if (err.code === 'auth/email-already-in-use') msg = "Email уже используется.";
       if (err.code === 'auth/weak-password') msg = "Пароль слишком простой (минимум 6 символов).";
       if (err.code === 'auth/invalid-email') msg = "Некорректный email.";
